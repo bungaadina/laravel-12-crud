@@ -83,12 +83,12 @@ class ProductController extends Controller
      * @param  mixed $id
      * @return View
      */
-    public function show(string $id): View
+    public function show(string $id)
     {
-        //get product by ID
+        // Ambil data produk berdasarkan ID, jika tidak ada maka otomatis error 404
         $product = Product::findOrFail($id);
 
-        //render view with product
+        // Kirim data ke view products/show.blade.php
         return view('products.show', compact('product'));
     }
     
