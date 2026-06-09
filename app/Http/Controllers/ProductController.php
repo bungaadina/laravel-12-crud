@@ -2,39 +2,47 @@
 
 namespace App\Http\Controllers;
 
-//import model product
+// Import Model Product
 use App\Models\Product; 
 
-//import return type View
+// Import Return Type View
 use Illuminate\View\View;
 
-//import return type redirectResponse
+// Import Http Request (Perbaikan Namespace)
 use Illuminate\Http\Request;
 
-//import Http Request
+// Import Return Type RedirectResponse (Perbaikan Namespace)
 use Illuminate\Http\RedirectResponse;
 
-//import Facades Storage
+// Import Facades Storage untuk Manajemen File
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
     /**
-     * index
+     * index (Menampilkan semua data dengan Pagination & Fitur Cari)
      *
-     * @return void
+     * @param  Request $request
+     * @return View
      */
-    public function index() : View
+    public function index(Request $request) : View
     {
-        //get all products
-        $products = Product::latest()->paginate(10);
+        // Tangkap kata kunci pencarian dari input user bernama 'search'
+        $keyword = $request->get('search');
 
-        //render view with products
-        return view('products.index', compact('products'));
+        // Jalankan query: jika ada keyword cari yang mirip judul, jika tidak ambil terbaru
+        $products = Product::latest()
+            ->when($keyword, function ($query, $keyword) {
+                return $query->where('title', 'like', '%' . $keyword . '%');
+            })
+            ->paginate(5); // Menampilkan 5 data per halaman
+
+        // Render view dengan mengirim data produk dan keyword
+        return view('products.index', compact('products', 'keyword'));
     }
 
     /**
-     * create
+     * create (Menampilkan halaman form tambah produk)
      *
      * @return View
      */
@@ -44,142 +52,142 @@ class ProductController extends Controller
     }
 
     /**
-     * store
+     * store (Memproses penyimpanan data produk baru)
      *
-     * @param  mixed $request
+     * @param  Request $request
      * @return RedirectResponse
      */
     public function store(Request $request): RedirectResponse
     {
-        //validate form
+        // Validasi Form
         $request->validate([
-            'image'         => 'required|image|mimes:jpeg,jpg,png|max:2048',
-            'title'         => 'required|min:5',
-            'description'   => 'required|min:10',
-            'price'         => 'required|numeric',
-            'stock'         => 'required|numeric'
+            'image'       => 'required|image|mimes:jpeg,jpg,png|max:2048',
+            'title'       => 'required|min:5',
+            'description' => 'required|min:10',
+            'price'       => 'required|numeric',
+            'stock'       => 'required|numeric'
         ]);
 
-        //upload image
+        // Upload Gambar Baru ke Storage Disk 'public'
         $image = $request->file('image');
-        $image->storeAs('public/products', $image->hashName());
+        $image->storeAs('products', $image->hashName(), 'public');
 
-        //create product
+        // Create Product ke Database
         Product::create([
-            'image'         => $image->hashName(),
-            'title'         => $request->title,
-            'description'   => $request->description,
-            'price'         => $request->price,
-            'stock'         => $request->stock
+            'image'       => $image->hashName(),
+            'title'       => $request->title,
+            'description' => $request->description,
+            'price'       => $request->price,
+            'stock'       => $request->stock
         ]);
 
-        //redirect to index
+        // Redirect ke Index dengan Pesan Sukses
         return redirect()->route('products.index')->with(['success' => 'Data Berhasil Disimpan!']);
     }
     
     /**
-     * show
+     * show (Menampilkan detail lengkap satu data produk)
      *
-     * @param  mixed $id
+     * @param  string $id
      * @return View
      */
-    public function show(string $id)
+    public function show(string $id): View
     {
-        // Ambil data produk berdasarkan ID, jika tidak ada maka otomatis error 404
+        // Ambil data produk berdasarkan ID, jika tidak ada otomatis 404
         $product = Product::findOrFail($id);
 
-        // Kirim data ke view products/show.blade.php
+        // Kirim data ke view detail
         return view('products.show', compact('product'));
     }
     
     /**
-     * edit
+     * edit (Menampilkan form edit data berdasarkan ID)
      *
-     * @param  mixed $id
+     * @param  string $id
      * @return View
      */
     public function edit(string $id): View
     {
-        //get product by ID
+        // Ambil data produk berdasarkan ID
         $product = Product::findOrFail($id);
 
-        //render view with product
+        // Render view form edit
         return view('products.edit', compact('product'));
     }
         
     /**
-     * update
+     * update (Memproses update data produk)
      *
-     * @param  mixed $request
-     * @param  mixed $id
+     * @param  Request $request
+     * @param  string $id
      * @return RedirectResponse
      */
-    public function update(Request $request, $id): RedirectResponse
+    public function update(Request $request, string $id): RedirectResponse
     {
-        //validate form
+        // Validasi Form
         $request->validate([
-            'image'         => 'image|mimes:jpeg,jpg,png|max:2048',
-            'title'         => 'required|min:5',
-            'description'   => 'required|min:10',
-            'price'         => 'required|numeric',
-            'stock'         => 'required|numeric'
+            'image'       => 'image|mimes:jpeg,jpg,png|max:2048',
+            'title'       => 'required|min:5',
+            'description' => 'required|min:10',
+            'price'       => 'required|numeric',
+            'stock'       => 'required|numeric'
         ]);
 
-        //get product by ID
+        // Ambil data produk lama
         $product = Product::findOrFail($id);
 
-        //check if image is uploaded
+        // Cek apakah ada file gambar baru yang di-upload?
         if ($request->hasFile('image')) {
 
-						//delete old image
-            Storage::delete('products/'.$product->image);
-
-            //upload new image
+            // Upload gambar baru ke disk public
             $image = $request->file('image');
-            $image->storeAs('products', $image->hashName());
+            $image->storeAs('products', $image->hashName(), 'public');
 
-            //update product with new image
+            // Hapus gambar lama dari storage agar hemat memori
+            Storage::disk('public')->delete('products/' . $product->image);
+
+            // Update data dengan gambar baru
             $product->update([
-                'image'         => $image->hashName(),
-                'title'         => $request->title,
-                'description'   => $request->description,
-                'price'         => $request->price,
-                'stock'         => $request->stock
+                'image'       => $image->hashName(),
+                'title'       => $request->title,
+                'description' => $request->description,
+                'price'       => $request->price,
+                'stock'       => $request->stock
             ]);
 
         } else {
 
-            //update product without image
+            // Update data tanpa mengganti gambar lama
             $product->update([
-                'title'         => $request->title,
-                'description'   => $request->description,
-                'price'         => $request->price,
-                'stock'         => $request->stock
+                'title'       => $request->title,
+                'description' => $request->description,
+                'price'       => $request->price,
+                'stock'       => $request->stock
             ]);
         }
 
-        //redirect to index
+        // Redirect ke Index dengan Pesan Sukses
         return redirect()->route('products.index')->with(['success' => 'Data Berhasil Diubah!']);
     }
     
     /**
-     * destroy
+     * destroy (Menghapus data produk dan gambarnya)
      *
-     * @param  mixed $id
+     * @param  string $id
      * @return RedirectResponse
      */
-    public function destroy($id): RedirectResponse
+    public function destroy(string $id): RedirectResponse
     {
-        //get product by ID
+        // Ambil data produk berdasarkan ID
         $product = Product::findOrFail($id);
 
-        //delete image
-        Storage::delete('products/'. $product->image);
+        // Hapus file gambar asli dari disk public
+        Storage::disk('public')->delete('products/' . $product->image);
 
-        //delete product
+        // Hapus baris data dari database
         $product->delete();
 
-        //redirect to index
+        // Redirect ke Index dengan Pesan Sukses
         return redirect()->route('products.index')->with(['success' => 'Data Berhasil Dihapus!']);
     }
 }
