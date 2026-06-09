@@ -19,7 +19,22 @@
                 </div>
                 <div class="card border-0 shadow-sm rounded">
                     <div class="card-body">
-                        <a href="{{ route('products.create') }}" class="btn btn-md btn-success mb-3">ADD PRODUCT</a>
+                        
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-6/auto">
+                                <a href="{{ route('products.create') }}" class="btn btn-md btn-success mb-2 mb-md-0">ADD PRODUCT</a>
+                            </div>
+                            <div class="col-md-6 ms-auto">
+                                <form action="{{ route('products.index') }}" method="GET" class="d-flex">
+                                    <input type="text" name="search" class="form-control me-2" placeholder="Cari nama produk..." value="{{ request('search') }}">
+                                    <button type="submit" class="btn btn-primary">Cari</button>
+                                    @if(request('search'))
+                                        <a href="{{ route('products.index') }}" class="btn btn-secondary ms-2">Reset</a>
+                                    @endif
+                                </form>
+                            </div>
+                        </div>
+
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
@@ -50,13 +65,21 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <div class="alert alert-danger">
-                                        Data Products belum ada.
-                                    </div>
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="alert alert-danger mb-0 text-center">
+                                                Data Products belum ada atau tidak ditemukan.
+                                            </div>
+                                        </td>
+                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>
-                        {{ $products->links() }}
+
+                        <div class="mt-4 d-flex justify-content-center">
+                            {{ $products->appends(['search' => request('search')])->links('pagination::bootstrap-5') }}
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -67,7 +90,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        //message with sweetalert
+        // Message dengan SweetAlert
         @if(session('success'))
             Swal.fire({
                 icon: "success",
@@ -85,7 +108,6 @@
                 timer: 2000
             });
         @endif
-
     </script>
 
 </body>
