@@ -21,10 +21,11 @@
                     <div class="card-body">
                         
                         <div class="row mb-3 align-items-center">
-                            <div class="col-md-6/auto">
-                                <a href="{{ route('products.create') }}" class="btn btn-md btn-success mb-2 mb-md-0">ADD PRODUCT</a>
+                            <div class="col-md-6 d-flex flex-wrap gap-2">
+                                <a href="{{ route('products.create') }}" class="btn btn-md btn-success">ADD PRODUCT</a>
+                                <a href="{{ route('products.export-pdf') }}" class="btn btn-md btn-primary">CETAK PDF</a>
                             </div>
-                            <div class="col-md-6 ms-auto">
+                            <div class="col-md-6 ms-auto mt-2 mt-md-0">
                                 <form action="{{ route('products.index') }}" method="GET" class="d-flex">
                                     <input type="text" name="search" class="form-control me-2" placeholder="Cari nama produk..." value="{{ request('search') }}">
                                     <button type="submit" class="btn btn-primary">Cari</button>

@@ -8,14 +8,17 @@ use App\Models\Product;
 // Import Return Type View
 use Illuminate\View\View;
 
-// Import Http Request (Perbaikan Namespace)
+// Import Http Request
 use Illuminate\Http\Request;
 
-// Import Return Type RedirectResponse (Perbaikan Namespace)
+// Import Return Type RedirectResponse
 use Illuminate\Http\RedirectResponse;
 
 // Import Facades Storage untuk Manajemen File
 use Illuminate\Support\Facades\Storage;
+
+// Import Facade DomPDF untuk Cetak Laporan PDF
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProductController extends Controller
 {
@@ -189,5 +192,22 @@ class ProductController extends Controller
 
         // Redirect ke Index dengan Pesan Sukses
         return redirect()->route('products.index')->with(['success' => 'Data Berhasil Dihapus!']);
+    }
+
+    /**
+     * exportPdf (Mencetak seluruh data produk ke dalam file PDF)
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function exportPdf()
+    {
+        // Ambil semua data produk dari database tanpa pagination (agar tercetak semua)
+        $products = Product::latest()->get();
+
+        // Load view khusus yang akan dirender menjadi format PDF
+        $pdf = Pdf::loadView('products.pdf', compact('products'));
+
+        // Unduh otomatis file PDF-nya dengan nama file tertentu
+        return $pdf->download('laporan-produk.pdf');
     }
 }
