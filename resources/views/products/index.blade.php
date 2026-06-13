@@ -62,12 +62,35 @@
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand navbar-brand-custom" href="#">
-                <i class="fa-solid <i fa-solid fa-boxes-stacked text-primary me-2"></i>SIJA_STORE
+            <a class="navbar-brand navbar-brand-custom" href="{{ route('products.index') }}">
+                <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>SIJA_STORE
             </a>
-            <span class="navbar-text d-none d-md-inline-block">
-                <i class="fa-regular fa-calendar me-1"></i> {{ date('l, d F Y') }}
-            </span>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav me-auto mt-2 mt-lg-0">
+                    <span class="navbar-text d-none d-md-inline-block">
+                        <i class="fa-regular fa-calendar me-1"></i> {{ date('l, d F Y') }}
+                    </span>
+                </div>
+
+                <div class="navbar-nav align-items-center gap-3 mt-2 mt-lg-0">
+                    <span class="fw-semibold text-secondary">
+                        <i class="fa-solid fa-user-circle me-1 text-primary"></i> 
+                        {{ Auth::user()->name }}
+                    </span>
+                    
+                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-danger btn-action">
+                            <i class="fa-solid fa-right-from-bracket me-1"></i> Keluar
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </nav>
 
